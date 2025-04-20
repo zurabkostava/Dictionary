@@ -831,7 +831,14 @@ document.getElementById('save-settings').addEventListener('click', saveSettings)
 
 function loadVoices() {
     voices = synth.getVoices();
+
+    const enVoices = voices.filter(v => v.lang.startsWith('en'));
+    const kaVoices = voices.filter(v => v.lang.startsWith('ka'));
+
+    if (enVoices.length > 0) englishVoiceSelect.value = enVoices[0].name;
+    if (kaVoices.length > 0) georgianVoiceSelect.value = kaVoices[0].name;
 }
+
 
 function highlightRow(rows, index) {
     removeHighlight();
