@@ -409,7 +409,7 @@ function handleFile(event) {
         processData(jsonData);
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsBinaryString(file);
 }
 
 function saveData(data) {
