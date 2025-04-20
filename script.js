@@ -239,10 +239,11 @@ function playText() {
         const cells = row.querySelectorAll('td');
 
         // Skip the quantity cell
-        const word = cells[1].textContent;
-        const translation = cells[2].textContent;
-        const additionalTranslation = cells[3].textContent;
-        const examples = cells[4].querySelectorAll('p');
+        const word = cells[2].textContent;
+        const translation = cells[3].textContent;
+        const additionalTranslation = cells[4].textContent;
+        const examples = cells[5].querySelectorAll('p');
+
 
         playNewWordAudio(() => {
             prepareDisplayQueue(word, translation, additionalTranslation, examples);
@@ -395,9 +396,13 @@ function handleFile(event) {
     const file = event.target.files[0];
     const reader = new FileReader();
 
+    const isXLS = file.name.endsWith(".xls");
+
     reader.onload = function(event) {
-        const binaryStr = event.target.result;
-        const workbook = XLSX.read(binaryStr, { type: 'binary' });
+        const data = event.target.result;
+        const workbook = XLSX.read(data, {
+            type: isXLS ? 'binary' : 'array'
+        });
 
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
@@ -407,7 +412,11 @@ function handleFile(event) {
         processData(jsonData);
     };
 
-    reader.readAsBinaryString(file); // old XLS works now!
+    if (isXLS) {
+        reader.readAsBinaryString(file);
+    } else {
+        reader.readAsArrayBuffer(file);
+    }
 }
 
 
@@ -427,39 +436,52 @@ function processData(data) {
     const tableBody = document.querySelector('#study-table tbody');
     tableBody.innerHTML = '';
 
-    // Assuming the first row is the header
     const [header, ...rows] = data;
 
-    rows.forEach((row, index) => {
-        const word = row[2];
-        const translation = row[4];
-        const additionalTranslation = row[5] || '';
-        const examples = row.slice(6).filter(cell => cell !== undefined).join(' ');
+    wordOrder = [];
 
-        if (word && translation && examples) {
+    rows.forEach((row, index) => {
+        const learned = row[0] || '0%';
+        const tags = row[1] || '';
+        const word = row[2] || '';
+        const translation = row[3] || '';
+        const additionalTranslation = row[4] || '';
+        const examples = row[5] || '';
+
+        if (word && translation) {
             const rowElement = document.createElement('tr');
 
-            // ახალი სვეტი რაოდენობისთვის
+            // Quantity
             const quantityCell = document.createElement('td');
-            quantityCell.textContent = index + 1; // თითოეული სიტყვის რაოდენობა იქნება მისი ინდექსი პლუს ერთი
+            quantityCell.textContent = index + 1;
             quantityCell.setAttribute('data-label', 'Quantity');
             rowElement.appendChild(quantityCell);
 
+            // Learned
+            const learnedCell = document.createElement('td');
+            learnedCell.textContent = learned;
+            learnedCell.setAttribute('data-label', 'Learned');
+            rowElement.appendChild(learnedCell);
+
+            // Word
             const wordCell = document.createElement('td');
             wordCell.textContent = word;
             wordCell.setAttribute('data-label', 'Word');
             rowElement.appendChild(wordCell);
 
+            // Translation
             const translationCell = document.createElement('td');
             translationCell.textContent = translation;
             translationCell.setAttribute('data-label', 'Translation');
             rowElement.appendChild(translationCell);
 
+            // Additional Translation
             const additionalTranslationCell = document.createElement('td');
             additionalTranslationCell.textContent = additionalTranslation;
             additionalTranslationCell.setAttribute('data-label', 'Additional Translation');
             rowElement.appendChild(additionalTranslationCell);
 
+            // Examples
             const examplesCell = document.createElement('td');
             examplesCell.innerHTML = formatExamples(examples);
             examplesCell.setAttribute('data-label', 'Examples');
@@ -474,6 +496,9 @@ function processData(data) {
         shuffleWordOrder();
     }
 }
+
+
+
 
 function splitExamplesByLanguage(example) {
     const regex = /([ა-ჰ]+)/; // regex to identify Georgian characters
@@ -737,28 +762,28 @@ examplesCheckbox.addEventListener('change', function() {
 });
 
 const englishVoices = [
-   "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
-   "Microsoft AvaMultilingual Online (Natural) - English (United States)",
-   "Microsoft EmmaMultilingual Online (Natural) - English (United States)",
-   "Microsoft BrianMultilingual Online (Natural) - English (United States)",
-   "Microsoft Ava Online (Natural) - English (United States)",
-   "Microsoft Libby Online (Natural) - English (United Kingdom)",
-   "Microsoft Maisie Online (Natural) - English (United Kingdom)",
-   "Microsoft Ryan Online (Natural) - English (United Kingdom)",
-   "Microsoft Sonia Online (Natural) - English (United Kingdom)",
-   "Microsoft Thomas Online (Natural) - English (United Kingdom)",
-   "Microsoft Andrew Online (Natural) - English (United States)",
-   "Microsoft Emma Online (Natural) - English (United States)",
-   "Microsoft Brian Online (Natural) - English (United States)",
-   "Microsoft Ana Online (Natural) - English (United States)",
-   "Microsoft Aria Online (Natural) - English (United States)",
-   "Microsoft Christopher Online (Natural) - English (United States)",
-   "Microsoft Eric Online (Natural) - English (United States)",
-   "Microsoft Guy Online (Natural) - English (United States)",
-   "Microsoft Jenny Online (Natural) - English (United States)",
-   "Microsoft Michelle Online (Natural) - English (United States)",
-   "Microsoft Roger Online (Natural) - English (United States)",
-   "Microsoft Steffan Online (Natural) - English (United States)",
+    "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
+    "Microsoft AvaMultilingual Online (Natural) - English (United States)",
+    "Microsoft EmmaMultilingual Online (Natural) - English (United States)",
+    "Microsoft BrianMultilingual Online (Natural) - English (United States)",
+    "Microsoft Ava Online (Natural) - English (United States)",
+    "Microsoft Libby Online (Natural) - English (United Kingdom)",
+    "Microsoft Maisie Online (Natural) - English (United Kingdom)",
+    "Microsoft Ryan Online (Natural) - English (United Kingdom)",
+    "Microsoft Sonia Online (Natural) - English (United Kingdom)",
+    "Microsoft Thomas Online (Natural) - English (United Kingdom)",
+    "Microsoft Andrew Online (Natural) - English (United States)",
+    "Microsoft Emma Online (Natural) - English (United States)",
+    "Microsoft Brian Online (Natural) - English (United States)",
+    "Microsoft Ana Online (Natural) - English (United States)",
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Microsoft Christopher Online (Natural) - English (United States)",
+    "Microsoft Eric Online (Natural) - English (United States)",
+    "Microsoft Guy Online (Natural) - English (United States)",
+    "Microsoft Jenny Online (Natural) - English (United States)",
+    "Microsoft Michelle Online (Natural) - English (United States)",
+    "Microsoft Roger Online (Natural) - English (United States)",
+    "Microsoft Steffan Online (Natural) - English (United States)",
 ];
 
 const georgianVoices = [
@@ -831,14 +856,7 @@ document.getElementById('save-settings').addEventListener('click', saveSettings)
 
 function loadVoices() {
     voices = synth.getVoices();
-
-    const enVoices = voices.filter(v => v.lang.startsWith('en'));
-    const kaVoices = voices.filter(v => v.lang.startsWith('ka'));
-
-    if (enVoices.length > 0) englishVoiceSelect.value = enVoices[0].name;
-    if (kaVoices.length > 0) georgianVoiceSelect.value = kaVoices[0].name;
 }
-
 
 function highlightRow(rows, index) {
     removeHighlight();
@@ -901,3 +919,5 @@ function toggleShuffle() {
 function getRandomPhrase() {
     return randomPhrases[Math.floor(Math.random() * randomPhrases.length)];
 }
+
+
