@@ -396,8 +396,9 @@ function handleFile(event) {
     const reader = new FileReader();
 
     reader.onload = function(event) {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const binaryStr = event.target.result;
+        const workbook = XLSX.read(binaryStr, { type: 'binary' });
+
 
         // Assuming the first sheet is the one we want
         const firstSheetName = workbook.SheetNames[0];
