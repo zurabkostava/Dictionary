@@ -399,8 +399,6 @@ function handleFile(event) {
         const binaryStr = event.target.result;
         const workbook = XLSX.read(binaryStr, { type: 'binary' });
 
-
-        // Assuming the first sheet is the one we want
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
@@ -409,8 +407,9 @@ function handleFile(event) {
         processData(jsonData);
     };
 
-    reader.readAsBinaryString(file);
+    reader.readAsBinaryString(file); // old XLS works now!
 }
+
 
 function saveData(data) {
     localStorage.setItem('studyTableData', JSON.stringify(data));
