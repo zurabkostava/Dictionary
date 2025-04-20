@@ -811,6 +811,15 @@ georgianRateInput.addEventListener('input', () => {
 });
 
 const synth = window.speechSynthesis;
+
+synth.onvoiceschanged = () => {
+    const voices = synth.getVoices();
+    voices.forEach(v => {
+        if (v.lang.toLowerCase().includes("ka")) {
+            console.log(`${v.name} — ${v.lang}`);
+        }
+    });
+};
 let voices = [];
 
 synth.onvoiceschanged = loadVoices;
