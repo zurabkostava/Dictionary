@@ -2,6 +2,7 @@ let currentDisplayQueue = [];
 let currentExampleIndex = 0;
 let examplesCount = 'all';
 let randomExamples = false;
+let translationWordLimit = 'all';
 
 const audioFiles = {
     audio1: 'audio/audio1.wav',
@@ -566,14 +567,17 @@ function ensureTranslationAndExamples(translation, additionalTranslation, exampl
     }
 
     if (translation) {
-        speakWithPauses(translation, 'ka-GE', georgianVoiceSelect.value, georgianRateInput.value, () => {
-            if (additionalTranslation) {
-                speakWithPauses(additionalTranslation, 'ka-GE', georgianVoiceSelect.value, georgianRateInput.value, () => {
-                    if (!examplesCheckbox.checked) {
-                        announceExamples(() => readExamples(examples, 0, callback));
-                    } else {
-                        callback();
-                    }
+        const transWords = translation.split(';').map(t => t.trim()).filter(t => t);
+        const extraWords = additionalTranslation ? additionalTranslation.split(';').map(t => t.trim()).filter(t => t) : [];
+
+        let allWords = [...transWords, ...extraWords];
+        let limit = translationWordLimit === 'all' ? allWords.length : parseInt(translationWordLimit);
+        let wordsToRead = allWords.slice(0, limit);
+
+        function speakWordsSequentially(index = 0) {
+            if (index < wordsToRead.length) {
+                speakText(wordsToRead[index], 'ka-GE', georgianVoiceSelect.value, georgianRateInput.value, () => {
+                    setTimeout(() => speakWordsSequentially(index + 1), 100);
                 });
             } else {
                 if (!examplesCheckbox.checked) {
@@ -582,7 +586,10 @@ function ensureTranslationAndExamples(translation, additionalTranslation, exampl
                     callback();
                 }
             }
-        });
+        }
+
+        speakWordsSequentially();
+
     } else if (additionalTranslation) {
         speakWithPauses(additionalTranslation, 'ka-GE', georgianVoiceSelect.value, georgianRateInput.value, () => {
             if (!examplesCheckbox.checked) {
@@ -677,7 +684,9 @@ function saveSettings() {
         playAudioBeforeNewWord: playAudioBeforeNewWordCheckbox.checked,
         selectedAudio: audioSelect.value,
         examplesCount: document.getElementById('examples-count').value,
-        randomExamples: document.getElementById('random-examples').checked
+        randomExamples: document.getElementById('random-examples').checked,
+        translationWordLimit: document.getElementById('translation-word-limit').value,
+
     };
     localStorage.setItem('ttsSettings', JSON.stringify(settings));
     applyDarkMode(settings.darkModeEnabled);
@@ -691,6 +700,12 @@ function saveSettings() {
 
 function loadSettings() {
     const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
+    document.getElementById('translation-word-limit').value = settings.translationWordLimit || 'all';
+    translationWordLimit = settings.translationWordLimit || 'all';
+    document.getElementById('translation-word-limit').addEventListener('change', function() {
+        translationWordLimit = this.value;
+    });
+
 
     englishVoiceSelect.value = settings.englishVoice || englishVoiceSelect.options[0].value;
     georgianVoiceSelect.value = settings.georgianVoice || georgianVoiceSelect.options[0].value;
@@ -720,6 +735,9 @@ function loadSettings() {
     playAudioBeforeNewWord = playAudioBeforeNewWordCheckbox.checked;
     selectedAudio = audioSelect.value;
 }
+document.getElementById('translation-word-limit').addEventListener('change', function() {
+    translationWordLimit = this.value;
+});
 
 function applyDarkMode(enabled) {
     if (enabled) {
