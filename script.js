@@ -3,6 +3,7 @@ let currentExampleIndex = 0;
 let examplesCount = 'all';
 let randomExamples = false;
 let translationWordLimit = 'all';
+let learnedFilterThreshold = 100; // Default: do not read 100% (✔)
 
 const audioFiles = {
     audio1: 'audio/audio1.wav',
@@ -237,6 +238,22 @@ function playText() {
         highlightRow(tableRows, currentRowIndex);
 
         const row = tableRows[currentRowIndex];
+        const learnedText = row.querySelectorAll('td')[1]?.textContent.trim() || '0%';
+
+        let learnedPercent = 0;
+        if (learnedText === '✔' || learnedText === '✓' || learnedText.toUpperCase() === 'V') {
+            learnedPercent = 100;
+        } else {
+            const percentMatch = learnedText.match(/(\d+)%/);
+            learnedPercent = percentMatch ? parseInt(percentMatch[1]) : 0;
+        }
+
+
+        if (learnedPercent >= learnedFilterThreshold) {
+            index++;
+            readRow(); // Skip and move on
+            return;
+        }
         const cells = row.querySelectorAll('td');
 
         // Skip the quantity cell
@@ -686,6 +703,7 @@ function saveSettings() {
         examplesCount: document.getElementById('examples-count').value,
         randomExamples: document.getElementById('random-examples').checked,
         translationWordLimit: document.getElementById('translation-word-limit').value,
+        learnedFilterThreshold: parseInt(document.getElementById('learned-filter').value),
 
     };
     localStorage.setItem('ttsSettings', JSON.stringify(settings));
@@ -697,8 +715,14 @@ function saveSettings() {
     closeSettings();
 }
 
-
+document.getElementById('learned-filter').addEventListener('change', function () {
+    learnedFilterThreshold = parseInt(this.value);
+});
 function loadSettings() {
+    document.getElementById('learned-filter').value = settings.learnedFilterThreshold || '100';
+    learnedFilterThreshold = parseInt(settings.learnedFilterThreshold || '100');
+
+
     const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
     document.getElementById('translation-word-limit').value = settings.translationWordLimit || 'all';
     translationWordLimit = settings.translationWordLimit || 'all';
@@ -937,5 +961,4 @@ function toggleShuffle() {
 function getRandomPhrase() {
     return randomPhrases[Math.floor(Math.random() * randomPhrases.length)];
 }
-
 
