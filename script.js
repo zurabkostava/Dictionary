@@ -6,6 +6,7 @@ let translationWordLimit = 'all';
 let learnedFilterThreshold = 100; // Default: do not read 100% (✔)
 const narratorEnabledCheckbox = document.getElementById('narrator-enabled-checkbox');
 let narratorVoiceEnabled = true;
+const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
 
 const audioFiles = {
     audio1: 'audio/audio1.wav',
@@ -20,7 +21,7 @@ let playAudioBeforeNewWord = true;
 const newWordAudio = new Audio(audioFiles[selectedAudio]);
 
 function playNewWordAudio(callback) {
-    if (playAudioBeforeNewWord) {
+    if (selectedAudio !== 'none') {
         newWordAudio.src = audioFiles[selectedAudio];
         newWordAudio.play();
         newWordAudio.onended = callback;
@@ -28,6 +29,7 @@ function playNewWordAudio(callback) {
         callback();
     }
 }
+
 
 function loadTableData() {
     const storedData = localStorage.getItem('studyTableData');
@@ -251,11 +253,12 @@ function playText() {
         }
 
 
-        if (learnedPercent >= learnedFilterThreshold) {
+        if (learnedFilterThreshold !== 'all' && learnedPercent >= learnedFilterThreshold) {
             index++;
             readRow(); // Skip and move on
             return;
         }
+
         const cells = row.querySelectorAll('td');
 
         // Skip the quantity cell
@@ -272,7 +275,8 @@ function playText() {
             speakText(word, 'en-US', englishVoiceSelect.value, englishRateInput.value, () => {
                 setTimeout(() => {
                     ensureTranslationAndExamples(translation, additionalTranslation, examples, () => {
-                        if (!examplesCheckbox.checked) {
+                        const exampleCountNum = examplesCount === 'all' ? Infinity : parseInt(examplesCount);
+                        if (exampleCountNum > 0) {
                             setTimeout(() => {
                                 speakText(getRandomPhrase(), 'ka-GE', narratorVoiceSelect.value, georgianRateInput.value, () => {
                                     index++;
@@ -291,6 +295,8 @@ function playText() {
                                 stopText();
                             }
                         }
+
+
                     });
                 }, 50);
             });
@@ -317,7 +323,9 @@ function prepareDisplayQueue(word, translation, additionalTranslation, examples)
     }
 
     let count = examplesCount === 'all' ? examplesList.length : parseInt(examplesCount);
+    if (isNaN(count) || count === 0) return; // Skip adding examples
     examplesList = examplesList.slice(0, count);
+
 
     // Add selected examples to the queue
     examplesList.forEach(example => {
@@ -357,7 +365,8 @@ function updateWordDisplay(item) {
         wordElement.textContent = rest.join(' - ');
         wordElement.className = 'combined-word';
         wordSection.appendChild(wordElement);
-    } else if (item.type === 'example' && !examplesCheckbox.checked) {
+    } else if (item.type === 'example' && parseInt(examplesCount) > 0) {
+
         const [englishExample, georgianExample] = item.content.split(' — ');
 
         const exampleContainer = document.createElement('div');
@@ -599,11 +608,13 @@ function ensureTranslationAndExamples(translation, additionalTranslation, exampl
                     setTimeout(() => speakWordsSequentially(index + 1), 100);
                 });
             } else {
-                if (!examplesCheckbox.checked) {
+                const exampleCountNum = examplesCount === 'all' ? Infinity : parseInt(examplesCount);
+                if (exampleCountNum > 0) {
                     announceExamples(() => readExamples(examples, 0, callback));
                 } else {
                     callback();
                 }
+
             }
         }
 
@@ -611,18 +622,22 @@ function ensureTranslationAndExamples(translation, additionalTranslation, exampl
 
     } else if (additionalTranslation) {
         speakWithPauses(additionalTranslation, 'ka-GE', georgianVoiceSelect.value, georgianRateInput.value, () => {
-            if (!examplesCheckbox.checked) {
+            const exampleCountNum = examplesCount === 'all' ? Infinity : parseInt(examplesCount);
+            if (exampleCountNum > 0) {
                 announceExamples(() => readExamples(examples, 0, callback));
             } else {
                 callback();
             }
+
         });
     } else {
-        if (!examplesCheckbox.checked) {
+        const exampleCountNum = examplesCount === 'all' ? Infinity : parseInt(examplesCount);
+        if (exampleCountNum > 0) {
             announceExamples(() => readExamples(examples, 0, callback));
         } else {
             callback();
         }
+
     }
 }
 const narratorExamplePhrases = [
@@ -734,38 +749,47 @@ function closeSettings() {
 function saveSettings() {
     const settings = {
         narratorVoiceEnabled: narratorEnabledCheckbox.checked,
-
         englishVoice: englishVoiceSelect.value,
         georgianVoice: georgianVoiceSelect.value,
         narratorVoice: narratorVoiceSelect.value,
         englishRate: englishRateInput.value,
         georgianRate: georgianRateInput.value,
-        examplesEnabled: !examplesCheckbox.checked,
         shuffleEnabled: shuffleMode,
         darkModeEnabled: darkModeCheckbox.checked,
-        playAudioBeforeNewWord: playAudioBeforeNewWordCheckbox.checked,
         selectedAudio: audioSelect.value,
         examplesCount: document.getElementById('examples-count').value,
         randomExamples: document.getElementById('random-examples').checked,
         translationWordLimit: document.getElementById('translation-word-limit').value,
-        learnedFilterThreshold: parseInt(document.getElementById('learned-filter').value),
+        learnedFilterThreshold: document.getElementById('learned-filter').value,
 
     };
+
     localStorage.setItem('ttsSettings', JSON.stringify(settings));
-    applyDarkMode(settings.darkModeEnabled);
+
+    // Apply updated values
     playAudioBeforeNewWord = settings.playAudioBeforeNewWord;
     selectedAudio = settings.selectedAudio;
     examplesCount = settings.examplesCount;
     randomExamples = settings.randomExamples;
+    translationWordLimit = settings.translationWordLimit;
+    learnedFilterThreshold = settings.learnedFilterThreshold;
+
+    applyDarkMode(settings.darkModeEnabled);
     closeSettings();
 }
 
+
 document.getElementById('learned-filter').addEventListener('change', function () {
-    learnedFilterThreshold = parseInt(this.value);
+    const value = this.value;
+    learnedFilterThreshold = value === 'all' ? 'all' : parseInt(value);
 });
+
 function loadSettings() {
-    document.getElementById('learned-filter').value = settings.learnedFilterThreshold || '100';
-    learnedFilterThreshold = parseInt(settings.learnedFilterThreshold || '100');
+    document.getElementById('learned-filter').value = settings.learnedFilterThreshold || 'all';
+    learnedFilterThreshold = settings.learnedFilterThreshold === 'all'
+        ? 'all'
+        : parseInt(settings.learnedFilterThreshold || '100');
+
     narratorEnabledCheckbox.checked = settings.narratorVoiceEnabled !== undefined ? settings.narratorVoiceEnabled : true;
     narratorVoiceEnabled = narratorEnabledCheckbox.checked;
 
@@ -773,7 +797,6 @@ function loadSettings() {
         narratorVoiceEnabled = this.checked;
     });
 
-    const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
     document.getElementById('translation-word-limit').value = settings.translationWordLimit || 'all';
     translationWordLimit = settings.translationWordLimit || 'all';
     document.getElementById('translation-word-limit').addEventListener('change', function() {
@@ -786,12 +809,11 @@ function loadSettings() {
     narratorVoiceSelect.value = settings.narratorVoice || narratorVoiceSelect.options[0].value;
     englishRateInput.value = settings.englishRate || '1';
     georgianRateInput.value = settings.georgianRate || '1';
-    examplesCheckbox.checked = settings.examplesEnabled === undefined ? true : !settings.examplesEnabled;
     shuffleMode = settings.shuffleEnabled || false;
     darkModeCheckbox.checked = settings.darkModeEnabled || false;
     englishRateValue.textContent = settings.englishRate || '1';
     georgianRateValue.textContent = settings.georgianRate || '1';
-    playAudioBeforeNewWordCheckbox.checked = settings.playAudioBeforeNewWord !== undefined ? settings.playAudioBeforeNewWord : true;
+    selectedAudio = settings.selectedAudio || 'audio1';
     audioSelect.value = settings.selectedAudio || 'audio1';
     document.getElementById('examples-count').value = settings.examplesCount || 'all';
     document.getElementById('random-examples').checked = settings.randomExamples || false;
@@ -828,30 +850,17 @@ const georgianRateValue = document.getElementById('georgian-rate-value');
 const englishVoiceSelect = document.getElementById('english-voice');
 const georgianVoiceSelect = document.getElementById('georgian-voice');
 const narratorVoiceSelect = document.getElementById('narrator-voice');
-const examplesCheckbox = document.getElementById('examples-checkbox');
 const darkModeCheckbox = document.getElementById('dark-mode-checkbox');
-const playAudioBeforeNewWordCheckbox = document.getElementById('play-audio-checkbox');
 const audioSelect = document.getElementById('audio-select');
 
-examplesCheckbox.addEventListener('change', function() {
-    const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
-    settings.examplesEnabled = !this.checked;
-    localStorage.setItem('ttsSettings', JSON.stringify(settings));
-});
 
-playAudioBeforeNewWordCheckbox.addEventListener('change', function() {
-    playAudioBeforeNewWord = this.checked;
-});
+
 
 audioSelect.addEventListener('change', function() {
     selectedAudio = this.value;
 });
 
-examplesCheckbox.addEventListener('change', function() {
-    const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
-    settings.examplesEnabled = !this.checked;
-    localStorage.setItem('ttsSettings', JSON.stringify(settings));
-});
+
 
 const englishVoices = [
     "Microsoft AndrewMultilingual Online (Natural) - English (United States)",

@@ -200,12 +200,12 @@ tr:hover {
 .modal-content {
     background-color: #fefefe;
     border-radius: 20px;
-    margin: 140px auto;
+    margin: 50px auto;
     padding: 25px;
     border: 1px solid #888;
     width: 80%;
     max-width: 500px;
-    height: fit-content;
+    height: 80vh;
     max-height: 70%;
     overflow-y: auto;
     display: flex;
@@ -214,6 +214,7 @@ tr:hover {
 }
 #settings-modal{
     z-index: 999999999!important;
+    height: 100vh;
 
 }
 
@@ -254,6 +255,7 @@ tr:hover {
 }
 
 .close {
+    position: absolute;
     color: #aaa;
     float: right;
     align-self: flex-end;

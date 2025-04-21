@@ -12,6 +12,7 @@
 <body>
 
 <header>
+
     <div class="header-left">
         <h1>English Study Table</h1>
     </div>
@@ -89,10 +90,7 @@
             <input type="range" id="georgian-rate" min="0.5" max="2" step="0.1" value="1">
             <span id="georgian-rate-value">1</span>
         </div>
-        <div class="setting">
-            <label for="play-audio-checkbox">Play Audio Before New Word:</label>
-            <input type="checkbox" id="play-audio-checkbox">
-        </div>
+
 
         <div class="setting">
             <label for="translation-word-limit">Translation Words to Read:</label>
@@ -108,6 +106,7 @@
         <div class="setting">
             <label for="audio-select">Select Audio:</label>
             <select id="audio-select">
+                <option value="none">No Sound</option>
                 <option value="audio1">Audio 1</option>
                 <option value="audio2">Audio 2</option>
                 <option value="audio3">Audio 3</option>
@@ -117,40 +116,42 @@
             </select>
         </div>
 
-        <div class="setting">
-            <label for="examples-checkbox">Disable Read Examples:</label>
-            <input type="checkbox" id="examples-checkbox" checked>
-        </div>
+
         <div class="setting">
             <label for="examples-count">Number of Examples to Read:</label>
             <select id="examples-count">
-                <option value="all">All</option>
+                <option value="0">None</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
                 <option value="5">5</option>
+                <option value="all">All</option>
             </select>
+
+        </div>
+        <div class="setting">
+            <label for="random-examples">Read Random Examples:</label>
+            <input type="checkbox" id="random-examples">
         </div>
         <div class="setting">
             <label for="learned-filter">Filter by Learned:</label>
             <select id="learned-filter">
+                <option value="all">Read all (no filter)</option>
                 <option value="100">✔ Do not read 100% (✓)</option>
                 <option value="80">Do not read 80%+</option>
                 <option value="60">Do not read 60%+</option>
                 <option value="40">Do not read 40%+</option>
                 <option value="20">Do not read 20%+</option>
             </select>
+
         </div>
         <div class="setting">
             <label for="narrator-enabled-checkbox">Enable Narrator Voice (Example Intro):</label>
             <input type="checkbox" id="narrator-enabled-checkbox" checked>
         </div>
 
-        <div class="setting">
-            <label for="random-examples">Read Random Examples:</label>
-            <input type="checkbox" id="random-examples">
-        </div>
+
         <div class="setting">
             <label for="dark-mode-checkbox">Dark Mode:</label>
             <input type="checkbox" id="dark-mode-checkbox">
