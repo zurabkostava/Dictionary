@@ -655,6 +655,12 @@ function announceExamples(callback) {
 }
 
 
+function getAvailableVoice(nameContains, langStartsWith) {
+    return voices.find(v =>
+        v.name.includes(nameContains) &&
+        v.lang.startsWith(langStartsWith)
+    );
+}
 
 function readExamples(examples, index, callback) {
     if (!isPlaying || currentDisplayQueue.length === 0) {
@@ -698,16 +704,25 @@ function shuffleArray(array) {
     }
 }
 
-function speakText(text, lang, voiceName, rate, callback) {
+function speakText(text, lang, preferredVoiceName, rate, callback) {
     if (!isPlaying) return;
+
+    let selectedVoice = voices.find(voice => voice.name === preferredVoiceName);
+
+    // fallback: მოძებნე მსგავსი ხმა თუ კონკრეტული არ იპოვნა
+    if (!selectedVoice) {
+        const fallbackName = preferredVoiceName.includes("Eka") ? "Eka" : "Giorgi";
+        selectedVoice = getAvailableVoice(fallbackName, lang) || voices.find(v => v.lang.startsWith(lang));
+    }
 
     currentUtterance = new SpeechSynthesisUtterance(text);
     currentUtterance.lang = lang;
-    currentUtterance.voice = voices.find(voice => voice.name === voiceName);
+    currentUtterance.voice = selectedVoice;
     currentUtterance.rate = rate;
     currentUtterance.onend = callback;
     synth.speak(currentUtterance);
 }
+
 function openSettings() {
     document.getElementById('settings-modal').style.display = 'block';
 }
