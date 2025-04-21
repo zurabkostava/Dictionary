@@ -4,6 +4,8 @@ let examplesCount = 'all';
 let randomExamples = false;
 let translationWordLimit = 'all';
 let learnedFilterThreshold = 100; // Default: do not read 100% (✔)
+const narratorEnabledCheckbox = document.getElementById('narrator-enabled-checkbox');
+let narratorVoiceEnabled = true;
 
 const audioFiles = {
     audio1: 'audio/audio1.wav',
@@ -623,10 +625,36 @@ function ensureTranslationAndExamples(translation, additionalTranslation, exampl
         }
     }
 }
+const narratorExamplePhrases = [
+    "მაგალითები.",
+    "მოუსმინეთ მაგალითებს.",
+    "აი, ახლა მაგალითებია.",
+    "მოდი, გავუსმინოთ მაგალითებს.",
+    "ახლა გადავიდეთ მაგალითებზე.",
+    "მოდით, დავუკვირდეთ მაგალითებს.",
+    "გაეცანით შემდეგ მაგალითებს.",
+    "ესენია მაგალითები.",
+    "აი, როგორ გამოიყენება ეს სიტყვა.",
+    "ახლა ვნახოთ გამოყენება წინადადებაში.",
+    "შევამოწმოთ სიტყვა კონტექსტში.",
+    "მოუსმინეთ როგორ ჟღერს სიტყვა პრაქტიკაში.",
+    "ეს სიტყვა ასე გამოიყენება.",
+];
+
 
 function announceExamples(callback) {
-    speakText("მაგალითები. ", 'ka-GE', narratorVoiceSelect.value, georgianRateInput.value, callback);
+    const narratorEnabled = document.getElementById('narrator-enabled-checkbox').checked;
+
+    if (!narratorEnabled) {
+        callback(); // skip narrator intro
+        return;
+    }
+
+    const phrase = narratorExamplePhrases[Math.floor(Math.random() * narratorExamplePhrases.length)];
+    speakText(phrase, 'ka-GE', narratorVoiceSelect.value, georgianRateInput.value, callback);
 }
+
+
 
 function readExamples(examples, index, callback) {
     if (!isPlaying || currentDisplayQueue.length === 0) {
@@ -690,6 +718,8 @@ function closeSettings() {
 
 function saveSettings() {
     const settings = {
+        narratorVoiceEnabled: narratorEnabledCheckbox.checked,
+
         englishVoice: englishVoiceSelect.value,
         georgianVoice: georgianVoiceSelect.value,
         narratorVoice: narratorVoiceSelect.value,
@@ -721,7 +751,12 @@ document.getElementById('learned-filter').addEventListener('change', function ()
 function loadSettings() {
     document.getElementById('learned-filter').value = settings.learnedFilterThreshold || '100';
     learnedFilterThreshold = parseInt(settings.learnedFilterThreshold || '100');
+    narratorEnabledCheckbox.checked = settings.narratorVoiceEnabled !== undefined ? settings.narratorVoiceEnabled : true;
+    narratorVoiceEnabled = narratorEnabledCheckbox.checked;
 
+    narratorEnabledCheckbox.addEventListener('change', function () {
+        narratorVoiceEnabled = this.checked;
+    });
 
     const settings = JSON.parse(localStorage.getItem('ttsSettings')) || {};
     document.getElementById('translation-word-limit').value = settings.translationWordLimit || 'all';
